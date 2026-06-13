@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Argent</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #0c0e12; overflow: hidden;
+                 touch-action: none; -webkit-user-select: none; user-select: none; }
+    #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    /* The game renders at 480x432; scale it up crisply to fill the screen height. */
+    #canvas { image-rendering: pixelated; image-rendering: crisp-edges;
+              height: 100vh; width: auto; max-width: 100vw; visibility: hidden; }
+    #loadingCanvas { display: none; }
+    #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+             flex-direction: column; color: #cdd6e4; background: #0c0e12; font-family: sans-serif; z-index: 5; }
+    #start h1 { font-size: 11vh; letter-spacing: 0.15em; margin: 0 0 2vh; }
+    #start p  { font-size: 3.2vh; opacity: 0.8; }
+    #start small { font-size: 2vh; opacity: 0.5; margin-top: 4vh; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="loadingCanvas" width="800" height="600"></canvas>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  </div>
+  <div id="start"><h1>ARGENT</h1><p id="startmsg">Loading…</p><small>Park first · tap to play</small></div>
+
+  <script>
+    var startEl = document.getElementById('start'), startMsg = document.getElementById('startmsg');
+    var loaded = false;
+    function beginIfReady() {
+      if (!loaded) return;
+      startEl.style.display = 'none';
+      document.getElementById('canvas').style.visibility = 'visible';
+    }
+    startEl.addEventListener('click', beginIfReady);
+    startEl.addEventListener('touchstart', beginIfReady);
+
+    var Module = {
+      arguments: ["./game.love"],
+      INITIAL_MEMORY: 67108864,
+      printErr: console.error.bind(console),
+      canvas: document.getElementById('canvas'),
+      setStatus: function (text) {
+        if (text) { startMsg.textContent = text; }
+        else if (Module.remainingDependencies === 0) { loaded = true; startMsg.textContent = "Tap to play"; }
+      },
+      totalDependencies: 0, remainingDependencies: 0,
+      monitorRunDependencies: function (left) {
+        this.remainingDependencies = left;
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        Module.setStatus(left ? 'Loading… (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : '');
+      }
+    };
+    Module.setStatus('Loading…');
+    window.onerror = function () { startMsg.textContent = 'Error — see console. Try reloading.'; };
+    var applicationLoad = function () { Love(Module); };
+    // keep arrow keys / space from scrolling the page
+    window.addEventListener("keydown", function (e) {
+      if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) e.preventDefault();
+    }, false);
+  </script>
+  <script src="game.js"></script>
+  <script async src="love.js" onload="applicationLoad()"></script>
+</body>
+</html>
